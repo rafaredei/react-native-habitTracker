@@ -1,16 +1,18 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView, SafeAreaView} from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function App() {
-  const [Hours, setHours] = useState(0);
-  const [Minutes, setMinutes] = useState(0);
-  const [Seconds, setSeconds] = useState(0);
-  const [data, setData] = useState ([
-    { key: 'Workout', id: '1' },
-    { key: 'Read for 30 minutes', id: '2' },
-    
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [data, setData] = useState([
+    { type: 'header', key: 'your', id: '0' },
+    { type: 'header', key: 'habits', count: 4, id: '1' },
+    { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
+    { type: 'habit', key: 'Workout', id: '3' },
+    { type: 'habit', key: 'Read for 30 minutes', id: '4' },
   ]);
 
   useEffect(() => {
@@ -20,75 +22,74 @@ export default function App() {
       midnight.setHours(24, 0, 0, 0);
       const diff = midnight.getTime() - now.getTime();
       const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor(((diff % (1000 * 60 * 60)) % (1000 * 60)) / 1000);
       setHours(hours);
       setMinutes(minutes);
       setSeconds(seconds);
-    }
+
+      setData(prevData => prevData.map(item =>
+        item.type === 'time' ? { ...item, hours, minutes, seconds } : item
+      ));
+    };
+    updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const renderItem = ({ item }) => {
+    if (item.type === 'header' && item.key === 'your') {
+      return <Text style={styles.text}>Your</Text>;
+    } else if (item.type === 'header' && item.key === 'habits') {
+      return (
+        <Text style={styles.text}>
+          <Text style={styles.boldText}>Habits </Text>
+          <Text style={styles.normalText}>({item.count})</Text>
+        </Text>
+      );
+    } else if (item.type === 'time') {
+      return <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>;
+    } else if (item.type === 'habit') {
+      return (
+        <View style={styles.cardContainer}>
+          <View style={styles.cardTextContainer}>
+            <Text style={styles.cardText}>{item.key}</Text>
+          </View>
+          <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
+            <Icon name="pencil" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return null;
+  };
 
   const renderSeparator = () => (
     <View style={styles.separator} />
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.list}>
-          <Text style={styles.text}>Your</Text>
-          <Text style={styles.text}>
-            <Text style={styles.boldText}>Habits </Text>
-            <Text style={styles.normalText}>(4)</Text>
-          </Text>
-          <Text style={styles.bedtimeText}>{Hours}h {Minutes}m {Seconds}s</Text>
-          <View style={styles.habitListContainer}>
-            <FlatList
-              data={data}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.cardContainer}>
-                  <View style={styles.cardTextContainer}>
-                    <Text style={styles.cardText}>{item.key}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
-                      <Icon name="pencil" size={20} color="white" />
-                    </TouchableOpacity>
-                </View>
-              )}
-              ItemSeparatorComponent={renderSeparator}
-            />
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ItemSeparatorComponent={renderSeparator}
+          contentContainerStyle={styles.contentContainer}
+        />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
     backgroundColor: 'rgb(255, 255, 255)',
-
   },
-  list: {
+  contentContainer: {
     paddingLeft: 20,
-  },
-  item: {
-    backgroundColor: 'plum',
-    paddingVertical: 5,
-    borderRadius: 10,
-    fontSize: 30,
-    fontWeight: 'bold',
-    margin: 5,
-  },
-  habitListContainer: {
-    paddingTop: 40,
-    marginLeft: -15
   },
   text: {
     color: 'black',
@@ -102,9 +103,10 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: 430,
-    height: 420,
+    height: 430,
     backgroundColor: 'plum',
     borderRadius: 50,
+    marginLeft: -15,
   },
   cardTextContainer: {
     width: 300,
@@ -128,13 +130,13 @@ const styles = StyleSheet.create({
   editButton: {
     position: 'absolute',
     bottom: 15,
-    left: 15, 
+    left: 15,
     width: 90,
     height: 90,
     borderRadius: 45,
     borderWidth: 1,
     borderColor: 'white',
-    backgroundColor: 'deepskyblue', 
+    backgroundColor: 'deepskyblue',
     justifyContent: 'center',
     alignItems: 'center',
   },
