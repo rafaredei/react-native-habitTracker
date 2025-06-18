@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ export default function App() {
   const [seconds, setSeconds] = useState(0);
   const [data, setData] = useState([
     { type: 'header', key: 'your', id: '0' },
-    { type: 'header', key: 'habits', count: 4, id: '1' },
+    { type: 'header', key: 'habits', count: 4, id: '1' }, // Streak can be added back if needed
     { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
     { type: 'habit', key: 'Workout', id: '3' },
     { type: 'habit', key: 'Read for 30 minutes', id: '4' },
@@ -42,10 +42,15 @@ export default function App() {
       return <Text style={styles.text}>Your</Text>;
     } else if (item.type === 'header' && item.key === 'habits') {
       return (
-        <Text style={styles.text}>
-          <Text style={styles.boldText}>Habits </Text>
-          <Text style={styles.normalText}>({item.count})</Text>
-        </Text>
+        <View style={styles.headerContainer}>
+          <Text style={styles.text}>
+            <Text style={{ fontWeight: 'bold' }}>Habits </Text>
+            <Text style={{ fontWeight: 'normal' }}>({item.count - 2})</Text>
+          </Text>
+          <View style={styles.streakBubble}>
+            <Text style={styles.streakText}>15</Text>
+          </View>
+        </View>
       );
     } else if (item.type === 'time') {
       return <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>;
@@ -55,6 +60,8 @@ export default function App() {
           <View style={styles.cardTextContainer}>
             <Text style={styles.cardText}>{item.key}</Text>
           </View>
+          <Text style={[styles.cardText, {fontSize: 50}]}>23</Text>
+          <Text style={[styles.cardText, {fontSize: 30}]}>day streak</Text>
           <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
             <Icon name="pencil" size={20} color="white" />
           </TouchableOpacity>
@@ -93,8 +100,8 @@ const styles = StyleSheet.create({
   },
   text: {
     color: 'black',
-    fontWeight: 'bold',
     fontSize: 45,
+    fontWeight: 'bold',
   },
   bedtimeText: {
     paddingTop: 0,
@@ -121,12 +128,6 @@ const styles = StyleSheet.create({
   separator: {
     height: 5,
   },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  normalText: {
-    fontWeight: 'normal',
-  },
   editButton: {
     position: 'absolute',
     bottom: 15,
@@ -140,5 +141,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerContainer: {
+    position: 'relative', // Allows absolute positioning of the bubble
+  },
+  streakBubble: {
+    position: 'absolute',
+    right: 30,
+    bottom: 0,
+    backgroundColor: 'darkslategrey', // Bubble color
+    borderRadius: 45, // Half of width/height for a circle
+    width: 90,
+    height: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  streakText: {
+    color: 'white',
+    fontSize: 50, // Large number
+    fontWeight: 'bold',
+  },
 });
-
