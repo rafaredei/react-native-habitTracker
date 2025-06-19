@@ -13,6 +13,7 @@ export default function App() {
     { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
     { type: 'habit', key: 'Workout', id: '3' },
     { type: 'habit', key: 'Read for 30 minutes', id: '4' },
+    { type: 'create', id: '5'},
   ]);
 
   useEffect(() => {
@@ -57,17 +58,30 @@ export default function App() {
     } else if (item.type === 'habit') {
       return (
         <View style={styles.cardContainer}>
-          <View style={styles.cardTextContainer}>
+          <View style={styles.habitTextContainer}>
             <Text style={styles.cardText}>{item.key}</Text>
           </View>
-          <Text style={[styles.cardText, {fontSize: 50}]}>23</Text>
-          <Text style={[styles.cardText, {fontSize: 30}]}>day streak</Text>
-          <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
-            <Icon name="pencil" size={20} color="white" />
-          </TouchableOpacity>
+          <View style={styles.streakTextContainer}>
+            <Text style={[styles.cardText, {fontSize: 40}]}>23</Text>
+            <Text style={[styles.cardText, {fontSize: 20}]}>day streak</Text>
+          </View>
+          <View style={styles.editButtonContainer}>
+            <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
+              <Icon name="create-outline" size={35} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
       );
+    } else if (item.type === 'create') {
+      return (
+        <View style={styles.createButtonContainer}>
+          <TouchableOpacity style={styles.createButton} onPress={() => alert('Edit ' + item.key)}>
+            <Icon name="create" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
+      )
     }
+
     return null;
   };
 
@@ -114,6 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'plum',
     borderRadius: 50,
     marginLeft: -15,
+
   },
   cardTextContainer: {
     width: 300,
@@ -122,22 +137,19 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 50,
     fontWeight: 'bold',
-    paddingTop: 50,
+    paddingTop: 0,
     paddingLeft: 15,
   },
   separator: {
     height: 5,
   },
   editButton: {
-    position: 'absolute',
-    bottom: 15,
-    left: 15,
     width: 90,
     height: 90,
     borderRadius: 45,
     borderWidth: 1,
-    borderColor: 'white',
-    backgroundColor: 'deepskyblue',
+    borderColor: 'black',
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -159,5 +171,30 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 50, // Large number
     fontWeight: 'bold',
+  },
+  habitTextContainer: {
+    paddingTop: 40,
+  },
+  streakTextContainer: {
+    position: 'absolute',
+    paddingTop: 180, 
+  },
+  editButtonContainer: {
+    position: 'absolute',
+    paddingTop: 320, 
+    paddingLeft: 10,
+  },
+  createButtonContainer: {
+    alignItems: 'flex-end',
+  },
+  createButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: 'white',
+    backgroundColor: 'deepskyblue',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
