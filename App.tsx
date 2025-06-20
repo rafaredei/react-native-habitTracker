@@ -76,7 +76,7 @@ export default function App() {
       return (
         <View style={styles.createButtonContainer}>
           <TouchableOpacity style={styles.createButton} onPress={() => alert('Edit ' + item.key)}>
-            <Icon name="create" size={20} color="white" />
+            <Icon name="add-outline" size={50} color="black" />
           </TouchableOpacity>
         </View>
       )
@@ -143,25 +143,15 @@ const styles = StyleSheet.create({
   separator: {
     height: 5,
   },
-  editButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 1,
-    borderColor: 'black',
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   headerContainer: {
-    position: 'relative', // Allows absolute positioning of the bubble
+    position: 'relative',
   },
   streakBubble: {
     position: 'absolute',
     right: 30,
     bottom: 0,
-    backgroundColor: 'darkslategrey', // Bubble color
-    borderRadius: 45, // Half of width/height for a circle
+    backgroundColor: 'darkslategrey', 
+    borderRadius: 45, 
     width: 90,
     height: 90,
     justifyContent: 'center',
@@ -169,7 +159,7 @@ const styles = StyleSheet.create({
   },
   streakText: {
     color: 'white',
-    fontSize: 50, // Large number
+    fontSize: 50, 
     fontWeight: 'bold',
   },
   habitTextContainer: {
@@ -184,16 +174,23 @@ const styles = StyleSheet.create({
     paddingTop: 320, 
     paddingLeft: 10,
   },
+  editButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'mintcream',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   createButtonContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 0,
   },
   createButton: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 1,
-    borderColor: 'white',
-    backgroundColor: 'deepskyblue',
+    backgroundColor: 'mintcream',
     justifyContent: 'center',
     alignItems: 'center',
   },
