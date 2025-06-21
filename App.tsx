@@ -13,7 +13,8 @@ export default function App() {
     { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
     { type: 'habit', key: 'Workout', id: '3' },
     { type: 'habit', key: 'Read for 30 minutes', id: '4' },
-    { type: 'create', id: '5'},
+    { type: 'habit', key: 'Make music', id: '5' },
+    { type: 'create', id: '6'},
   ]);
 
   useEffect(() => {
@@ -111,6 +112,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingLeft: 20,
+    paddingBottom: 70,
   },
   text: {
     color: 'black',
@@ -178,19 +180,21 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'mintcream',
+    backgroundColor: 'snow',
     justifyContent: 'center',
     alignItems: 'center',
   },
   createButtonContainer: {
-    alignItems: 'center',
-    paddingBottom: 0,
+    position: 'absolute',
+    left: '50%',
+    transform: [{ translateX: -50 }], // Shift left by half the width
+    bottom: -45,
   },
   createButton: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'mintcream',
+    backgroundColor: 'snow',
     justifyContent: 'center',
     alignItems: 'center',
   },
