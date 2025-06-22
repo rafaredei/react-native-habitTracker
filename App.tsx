@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, Dimensions } from '
 import { useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function App() {
   const [hours, setHours] = useState(0);
@@ -13,7 +14,7 @@ export default function App() {
     { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
     { type: 'habit', key: 'Workout', id: '3' },
     { type: 'habit', key: 'Read for 30 minutes', id: '4' },
-    { type: 'habit', key: 'Make music', id: '5' },
+    { type: 'habit', key: 'Guitar practice', id: '5' },
     { type: 'create', id: '6'},
   ]);
 
@@ -99,6 +100,7 @@ export default function App() {
           renderItem={renderItem}
           ItemSeparatorComponent={renderSeparator}
           contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
         />
       </SafeAreaView>
     </SafeAreaProvider>
@@ -185,10 +187,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createButtonContainer: {
-    position: 'absolute',
-    left: '50%',
-    transform: [{ translateX: -50 }], // Shift left by half the width
-    bottom: -45,
+    alignItems: 'center',
+    paddingRight: 20,
+    marginTop: -50,
   },
   createButton: {
     width: 100,
