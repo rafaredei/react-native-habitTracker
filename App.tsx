@@ -9,13 +9,12 @@ export default function App() {
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [data, setData] = useState([
-    { type: 'header', key: 'your', id: '0' },
-    { type: 'header', key: 'habits', count: 4, id: '1' }, // Streak can be added back if needed
-    { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
-    { type: 'habit', key: 'Workout', id: '3' },
-    { type: 'habit', key: 'Read for 30 minutes', id: '4' },
-    { type: 'habit', key: 'Guitar practice', id: '5' },
-    { type: 'create', id: '6'},
+    { type: 'header', key: 'habits', count: 4, id: '0' }, // Removed separate 'your' item
+    { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '1' },
+    { type: 'habit', key: 'Workout', id: '2', completed: false },
+    { type: 'habit', key: 'Read for 30 minutes', id: '3', completed: false },
+    { type: 'habit', key: 'Guitar practice', id: '4', completed: false },
+    { type: 'create', id: '5' },
   ]);
 
   useEffect(() => {
@@ -40,50 +39,63 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const toggleCompletion = (id) => {
+    setData(prevData =>
+      prevData.map(item =>
+        item.id === id && item.type === 'habit'
+          ? { ...item, completed: !item.completed }
+          : item
+      )
+    );
+  };
+
   const renderItem = ({ item }) => {
-    if (item.type === 'header' && item.key === 'your') {
-      return <Text style={styles.text}>Your</Text>;
-    } else if (item.type === 'header' && item.key === 'habits') {
+    if (item.type === 'header' && item.key === 'habits') {
       return (
         <View style={styles.headerContainer}>
-          <Text style={styles.text}>
-            <Text style={{ fontWeight: 'bold' }}>Habits </Text>
-            <Text style={{ fontWeight: 'normal' }}>({item.count - 2})</Text>
-          </Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.text}>Your</Text>
+            <Text style={styles.text}>Habits ({item.count - 2})</Text>
+            <Text style={styles.bedtimeText}>{item.hours || data.find(i => i.type === 'time').hours}h {item.minutes || data.find(i => i.type === 'time').minutes}m {item.seconds || data.find(i => i.type === 'time').seconds}s</Text>
+          </View>
           <View style={styles.streakBubble}>
             <Text style={styles.streakText}>15</Text>
           </View>
         </View>
       );
     } else if (item.type === 'time') {
-      return <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>;
+      return null; // Handled in habits header
     } else if (item.type === 'habit') {
       return (
-        <View style={styles.cardContainer}>
-          <View style={styles.habitTextContainer}>
-            <Text style={styles.cardText}>{item.key}</Text>
-          </View>
-          <View style={styles.streakTextContainer}>
-            <Text style={[styles.cardText, {fontSize: 40}]}>23</Text>
-            <Text style={[styles.cardText, {fontSize: 20}]}>day streak</Text>
-          </View>
-          <View style={styles.editButtonContainer}>
-            <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
-              <Icon name="create-outline" size={35} color="black" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <TouchableOpacity onPress={() => toggleCompletion(item.id)} activeOpacity={0.8}>
+          <LinearGradient
+            colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']}
+            style={styles.cardContainer}
+          >
+            <View style={styles.habitTextContainer}>
+              <Text style={styles.cardText}>{item.key}</Text>
+            </View>
+            <View style={styles.streakTextContainer}>
+              <Text style={[styles.cardText, { fontSize: 40 }]}>23</Text>
+              <Text style={[styles.cardText, { fontSize: 20 }]}>day streak</Text>
+            </View>
+            <View style={styles.editButtonContainer}>
+              <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
+                <Icon name="create-outline" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
       );
     } else if (item.type === 'create') {
       return (
         <View style={styles.createButtonContainer}>
-          <TouchableOpacity style={styles.createButton} onPress={() => alert('Edit ' + item.key)}>
+          <TouchableOpacity style={styles.createButton} onPress={() => alert('Create new habit')}>
             <Icon name="add-outline" size={50} color="black" />
           </TouchableOpacity>
         </View>
-      )
+      );
     }
-
     return null;
   };
 
@@ -93,7 +105,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         <FlatList
           data={data}
           keyExtractor={(item) => item.id}
@@ -101,6 +113,8 @@ export default function App() {
           ItemSeparatorComponent={renderSeparator}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          decelerationRate={0.97}
+          scrollEventThrottle={16}
         />
       </SafeAreaView>
     </SafeAreaProvider>
@@ -113,8 +127,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgb(255, 255, 255)',
   },
   contentContainer: {
-    paddingLeft: 20,
-    paddingBottom: 70,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
   },
   text: {
     color: 'black',
@@ -127,18 +141,17 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   cardContainer: {
-    width: 430,
-    height: 430,
-    backgroundColor: 'plum',
+    width: Dimensions.get('window').width - 40,
+    height: 300,
     borderRadius: 50,
-    marginLeft: -15,
-
-  },
-  cardTextContainer: {
-    width: 300,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   cardText: {
-    color: 'white',
+    color: '#333',
     fontSize: 50,
     fontWeight: 'bold',
     paddingTop: 0,
@@ -148,14 +161,19 @@ const styles = StyleSheet.create({
     height: 5,
   },
   headerContainer: {
-    position: 'relative',
+    width: Dimensions.get('window').width - 40,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   streakBubble: {
-    position: 'absolute',
-    right: 30,
-    bottom: 0,
-    backgroundColor: 'darkslategrey', 
-    borderRadius: 45, 
+    backgroundColor: 'grey',
+    borderRadius: 45,
     width: 90,
     height: 90,
     justifyContent: 'center',
@@ -163,32 +181,40 @@ const styles = StyleSheet.create({
   },
   streakText: {
     color: 'white',
-    fontSize: 50, 
+    fontSize: 50,
     fontWeight: 'bold',
   },
   habitTextContainer: {
     paddingTop: 40,
+    width: 300,
   },
   streakTextContainer: {
     position: 'absolute',
-    paddingTop: 180, 
+    paddingTop: 190,
   },
   editButtonContainer: {
     position: 'absolute',
-    paddingTop: 320, 
-    paddingLeft: 10,
+    top: 20,
+    right: 20,
   },
   editButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'snow',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   createButtonContainer: {
     alignItems: 'center',
-    paddingRight: 20,
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     marginTop: -50,
   },
   createButton: {
@@ -198,5 +224,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'snow',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
 });
