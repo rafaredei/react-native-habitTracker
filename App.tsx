@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: 380,
-    height: 300,
+    height: 240,
     borderRadius: 50,
     marginLeft: -15,
     elevation: 5,
@@ -187,18 +187,18 @@ const styles = StyleSheet.create({
   },
   streakTextContainer: {
     position: 'absolute',
-    paddingTop: 180,
+    paddingTop: 140,
   },
   editButtonContainer: {
     position: 'absolute',
     paddingLeft: 300,
-    paddingTop: 230,
+    paddingTop: 170,
   },
   editButton: {
     width: 50,
     height: 50,
-    borderRadius: 15,
-    backgroundColor: 'snow',
+    borderRadius: 25,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
     marginTop: -50,
   },
   createButton: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 50,
     backgroundColor: 'snow',
     justifyContent: 'center',
