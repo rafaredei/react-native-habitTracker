@@ -9,12 +9,13 @@ export default function App() {
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [data, setData] = useState([
-    { type: 'header', key: 'habits', count: 4, id: '0' }, // Removed separate 'your' item
-    { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '1' },
-    { type: 'habit', key: 'Workout', id: '2', completed: false },
-    { type: 'habit', key: 'Read for 30 minutes', id: '3', completed: false },
-    { type: 'habit', key: 'Guitar practice', id: '4', completed: false },
-    { type: 'create', id: '5' },
+    { type: 'header', key: 'your', id: '0' },
+    { type: 'header', key: 'habits', count: 4, id: '1' },
+    { type: 'time', hours: 0, minutes: 0, seconds: 0, id: '2' },
+    { type: 'habit', key: 'Workout', id: '3', completed: false },
+    { type: 'habit', key: 'Read for 30 minutes', id: '4', completed: false },
+    { type: 'habit', key: 'Guitar practice', id: '5', completed: false },
+    { type: 'create', id: '6' },
   ]);
 
   useEffect(() => {
@@ -50,26 +51,27 @@ export default function App() {
   };
 
   const renderItem = ({ item }) => {
-    if (item.type === 'header' && item.key === 'habits') {
+    if (item.type === 'header' && item.key === 'your') {
+      return <Text style={styles.text}>Your</Text>;
+    } else if (item.type === 'header' && item.key === 'habits') {
       return (
         <View style={styles.headerContainer}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.text}>Your</Text>
-            <Text style={styles.text}>Habits ({item.count - 2})</Text>
-            <Text style={styles.bedtimeText}>{item.hours || data.find(i => i.type === 'time').hours}h {item.minutes || data.find(i => i.type === 'time').minutes}m {item.seconds || data.find(i => i.type === 'time').seconds}s</Text>
-          </View>
+          <Text style={styles.text}>
+            <Text style={{ fontWeight: 'bold' }}>Habits </Text>
+            <Text style={{ fontWeight: 'normal' }}>({item.count - 2})</Text>
+          </Text>
           <View style={styles.streakBubble}>
             <Text style={styles.streakText}>15</Text>
           </View>
         </View>
       );
     } else if (item.type === 'time') {
-      return null; // Handled in habits header
+      return <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>;
     } else if (item.type === 'habit') {
       return (
         <TouchableOpacity onPress={() => toggleCompletion(item.id)} activeOpacity={0.8}>
           <LinearGradient
-            colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']}
+            colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']} // Green for completed, plum for incomplete
             style={styles.cardContainer}
           >
             <View style={styles.habitTextContainer}>
@@ -81,7 +83,7 @@ export default function App() {
             </View>
             <View style={styles.editButtonContainer}>
               <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
-                <Icon name="create-outline" size={20} color="white" />
+                <Icon name="create-outline" size={25} color="black" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -91,7 +93,7 @@ export default function App() {
       return (
         <View style={styles.createButtonContainer}>
           <TouchableOpacity style={styles.createButton} onPress={() => alert('Create new habit')}>
-            <Icon name="add-outline" size={50} color="black" />
+            <Icon name="add-outline" size={40} color="black" />
           </TouchableOpacity>
         </View>
       );
@@ -105,7 +107,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <FlatList
           data={data}
           keyExtractor={(item) => item.id}
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgb(255, 255, 255)',
   },
   contentContainer: {
-    paddingHorizontal: 20,
+    paddingLeft: 20,
     paddingBottom: 0,
   },
   text: {
@@ -141,9 +143,10 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   cardContainer: {
-    width: Dimensions.get('window').width - 40,
+    width: 380,
     height: 300,
     borderRadius: 50,
+    marginLeft: -15,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -161,17 +164,12 @@ const styles = StyleSheet.create({
     height: 5,
   },
   headerContainer: {
-    width: Dimensions.get('window').width - 40,
-    paddingHorizontal: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    position: 'relative',
   },
   streakBubble: {
+    position: 'absolute',
+    right: 30,
+    bottom: 0,
     backgroundColor: 'grey',
     borderRadius: 45,
     width: 90,
@@ -186,22 +184,21 @@ const styles = StyleSheet.create({
   },
   habitTextContainer: {
     paddingTop: 40,
-    width: 300,
   },
   streakTextContainer: {
     position: 'absolute',
-    paddingTop: 190,
+    paddingTop: 180,
   },
   editButtonContainer: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    paddingLeft: 300,
+    paddingTop: 230,
   },
   editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333',
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: 'snow',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
@@ -213,8 +210,8 @@ const styles = StyleSheet.create({
   createButtonContainer: {
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 20,
     paddingBottom: 30,
+    paddingRight: 20,
     marginTop: -50,
   },
   createButton: {
