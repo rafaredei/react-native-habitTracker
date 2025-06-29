@@ -2,15 +2,16 @@ import {
   StyleSheet,
   Text,
   View,
-  FlatList,
-  TouchableOpacity,
   Dimensions,
   Animated,
   TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,7 +29,6 @@ export default function App() {
     { type: 'habit', key: 'Workout', id: '1', completed: false },
     { type: 'habit', key: 'Read for 30 minutes', id: '2', completed: false },
     { type: 'habit', key: 'Guitar practice', id: '3', completed: false },
-    { type: 'create', id: '4' },
   ]);
 
   useEffect(() => {
@@ -85,16 +85,13 @@ export default function App() {
     );
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, drag, isActive }) => {
     if (item.type === 'header') {
       return (
         <View style={styles.headerTextContainer}>
           <View style={styles.textContainer}>
             <Text style={styles.text}>Your</Text>
-            <Text style={[styles.text, { marginTop: 0 }]}>
-              <Text style={{ fontWeight: 'bold' }}>Habits </Text>
-              <Text style={{ fontWeight: 'normal' }}>(2)</Text>
-            </Text>
+            <Text style={[styles.text, { marginTop: 0 }]}>Habits (2)</Text>
             <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>
           </View>
           <View style={styles.totalStreakBubble}>
@@ -104,7 +101,13 @@ export default function App() {
       );
     } else if (item.type === 'habit') {
       return (
-        <TouchableOpacity onPress={() => toggleCompletion(item.id)} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => toggleCompletion(item.id)}
+          onLongPress={drag}
+          delayLongPress={150}
+          style={[styles.cardWrapper, isActive && { opacity: 0.7 }]}
+          activeOpacity={0.9}
+        >
           <LinearGradient
             colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']}
             style={styles.cardContainer}
@@ -113,8 +116,8 @@ export default function App() {
               <Text style={styles.cardText}>{item.key}</Text>
             </View>
             <View style={styles.streakTextContainer}>
-              <Text style={[styles.cardText, { fontSize: 40 }]}>23</Text>
-              <Text style={[styles.cardText, { fontSize: 20 }]}>day streak</Text>
+              <Text style={[styles.cardText, { fontSize: 25 }]}>23</Text>
+              <Text style={[styles.cardText, { fontSize: 16 }]}>day streak</Text>
             </View>
             <View style={styles.editButtonContainer}>
               <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
@@ -124,78 +127,70 @@ export default function App() {
           </LinearGradient>
         </TouchableOpacity>
       );
-    } else if (item.type === 'create') {
-      return (
-        <View style={styles.createButtonContainer}>
-          <TouchableOpacity style={styles.createButton} onPress={showCreatePrompt}>
-            <Icon name="add-outline" size={40} color="black" />
-          </TouchableOpacity>
-        </View>
-      );
     }
     return null;
   };
 
-  const renderSeparator = () => (
-    <View style={styles.separator} />
-  );
-
   return (
-    <SafeAreaProvider>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <View style={styles.container}>
-          <FlatList
-            data={data}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            ItemSeparatorComponent={renderSeparator}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-            decelerationRate={0.97}
-            scrollEventThrottle={16}
-          />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.container}>
+            <DraggableFlatList
+              data={data}
+              keyExtractor={(item) => item.id}
+              onDragEnd={({ data }) => setData(data)}
+              renderItem={renderItem}
+              contentContainerStyle={styles.contentContainer}
+            />
 
-          {creatingHabit && (
-            <TouchableWithoutFeedback onPress={hideCreatePrompt}>
-              <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-                <TouchableWithoutFeedback onPress={() => {}}>
-                  <View style={styles.promptContainer}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="New habit"
-                      placeholderTextColor="#999"
-                      value={newHabitText}
-                      onChangeText={setNewHabitText}
-                      autoFocus
-                    />
-                    <TouchableOpacity
-                      style={styles.checkmark}
-                      onPress={() => {
-                        if (newHabitText.trim()) {
-                          setData(prevData => [
-                            ...prevData.slice(0, prevData.length - 1),
-                            {
-                              type: 'habit',
-                              key: newHabitText,
-                              id: Date.now().toString(),
-                              completed: false,
-                            },
-                            prevData[prevData.length - 1],
-                          ]);
-                        }
-                        hideCreatePrompt();
-                      }}
-                    >
-                      <Icon name="checkmark" size={30} color="black" />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableWithoutFeedback>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          )}
-        </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+            <View style={styles.createButtonContainer}>
+              <TouchableOpacity style={styles.createButton} onPress={showCreatePrompt}>
+                <Icon name="add-outline" size={40} color="black" />
+              </TouchableOpacity>
+            </View>
+
+            {creatingHabit && (
+              <TouchableWithoutFeedback onPress={hideCreatePrompt}>
+                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
+                  <TouchableWithoutFeedback onPress={() => {}}>
+                    <View style={styles.promptContainer}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="New habit"
+                        placeholderTextColor="#999"
+                        value={newHabitText}
+                        onChangeText={setNewHabitText}
+                        autoFocus
+                      />
+                      <TouchableOpacity
+                        style={styles.checkmark}
+                        onPress={() => {
+                          if (newHabitText.trim()) {
+                            setData(prevData => [
+                              ...prevData,
+                              {
+                                type: 'habit',
+                                key: newHabitText,
+                                id: Date.now().toString(),
+                                completed: false,
+                              },
+                            ]);
+                          }
+                          hideCreatePrompt();
+                        }}
+                      >
+                        <Icon name="checkmark" size={30} color="black" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            )}
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -220,8 +215,10 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 25,
   },
-  cardContainer: {
+  cardWrapper: {
     width: Dimensions.get('window').width * 0.9,
+  },
+  cardContainer: {
     height: 250,
     borderRadius: 50,
     elevation: 5,
@@ -236,9 +233,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     paddingTop: 0,
     paddingLeft: 15,
-  },
-  separator: {
-    height: 5,
   },
   headerTextContainer: {
     flexDirection: 'row',
