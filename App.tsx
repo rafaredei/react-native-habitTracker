@@ -9,7 +9,7 @@ export default function App() {
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [data, setData] = useState([
-    { type: 'header', key: 'your', id: '0', hours: 0, minutes: 0, seconds: 0 }, // Added initial time properties
+    { type: 'header', key: 'your', id: '0', hours: 0, minutes: 0, seconds: 0 },
     { type: 'habit', key: 'Workout', id: '1', completed: false },
     { type: 'habit', key: 'Read for 30 minutes', id: '2', completed: false },
     { type: 'habit', key: 'Guitar practice', id: '3', completed: false },
@@ -30,7 +30,7 @@ export default function App() {
       setSeconds(seconds);
 
       setData(prevData => prevData.map(item =>
-        item.type === 'header' ? { ...item, hours, minutes, seconds } : item // Update header with time
+        item.type === 'header' ? { ...item, hours, minutes, seconds } : item
       ));
     };
     updateTime();
@@ -52,15 +52,17 @@ export default function App() {
     if (item.type === 'header') {
       return (
         <View style={styles.headerTextContainer}>
-          <Text style={[styles.text, {marginTop: -10}]}>Your</Text>
-          <Text style={styles.text}>
-            <Text style={{ fontWeight: 'bold' }}>Habits </Text>
-            <Text style={{ fontWeight: 'normal' }}>(2)</Text>
-            <View style={styles.totalStreakBubble}>
-              <Text style={styles.totalStreakText}>15</Text>
-            </View>
-          </Text>
-          <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>
+          <View style={styles.textContainer}>
+            <Text style={styles.text}>Your</Text>
+            <Text style={[styles.text, { marginTop: 0 }]}>
+              <Text style={{ fontWeight: 'bold' }}>Habits </Text>
+              <Text style={{ fontWeight: 'normal' }}>(2)</Text>
+            </Text>
+            <Text style={styles.bedtimeText}>{item.hours}h {item.minutes}m {item.seconds}s</Text>
+          </View>
+          <View style={styles.totalStreakBubble}>
+            <Text style={styles.totalStreakText}>15</Text>
+          </View>
         </View>
       );
     } else if (item.type === 'habit') {
@@ -131,9 +133,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  contentContainer: {
-    
-  },
   text: {
     color: 'black',
     fontSize: 45,
@@ -145,6 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
   cardContainer: {
+    width: Dimensions.get('window').width * 0.9, 
     height: 250,
     borderRadius: 50,
     elevation: 5,
@@ -163,14 +163,22 @@ const styles = StyleSheet.create({
   separator: {
     height: 5,
   },
-  headerContainer: {
-    
-  },
   headerTextContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 20,
+  },
+  textContainer: {
+    flexDirection: 'column',
   },
   totalStreakBubble: {
     backgroundColor: 'grey',
-    borderRadius: 45,
+    borderRadius: 45, 
+    width: 90,
+    height: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   totalStreakText: {
     color: 'white',
@@ -182,12 +190,12 @@ const styles = StyleSheet.create({
   },
   streakTextContainer: {
     position: 'absolute',
-    paddingTop: 140,
+    paddingTop: 160,
   },
   editButtonContainer: {
     position: 'absolute',
-    right: 15, // Adjusted for responsive width
-    top: 15,
+    right: 15,
+    bottom: 30,
   },
   editButton: {
     width: 50,
