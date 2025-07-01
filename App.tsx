@@ -130,7 +130,7 @@ export default function App() {
                 style={styles.editButton}
                 onPress={() => showPrompt(item.key, item.id)}
               >
-                <Icon name="create-outline" size={25} color="black" />
+                <Icon name="ellipsis-horizontal-sharp" size={25} color="black" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'white',
+    
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
