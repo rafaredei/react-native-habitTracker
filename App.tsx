@@ -8,8 +8,10 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -22,6 +24,7 @@ export default function App() {
   const [seconds, setSeconds] = useState(0);
   const [creatingHabit, setCreatingHabit] = useState(false);
   const [newHabitText, setNewHabitText] = useState('');
+  const [editingHabitId, setEditingHabitId] = useState(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   const [data, setData] = useState([
@@ -55,7 +58,9 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const showCreatePrompt = () => {
+  const showPrompt = (text = '', id = null) => {
+    setNewHabitText(text);
+    setEditingHabitId(id);
     setCreatingHabit(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -64,7 +69,7 @@ export default function App() {
     }).start();
   };
 
-  const hideCreatePrompt = () => {
+  const hidePrompt = () => {
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 300,
@@ -72,6 +77,7 @@ export default function App() {
     }).start(() => {
       setCreatingHabit(false);
       setNewHabitText('');
+      setEditingHabitId(null);
     });
   };
 
@@ -105,7 +111,7 @@ export default function App() {
           onPress={() => toggleCompletion(item.id)}
           onLongPress={drag}
           delayLongPress={150}
-          style={[styles.cardWrapper, isActive && { opacity: 0.7 }]}
+          style={[styles.cardWrapper, { alignSelf: 'center' }, isActive && { opacity: 0.7 }]}
           activeOpacity={0.9}
         >
           <LinearGradient
@@ -120,12 +126,23 @@ export default function App() {
               <Text style={[styles.cardText, { fontSize: 16 }]}>day streak</Text>
             </View>
             <View style={styles.editButtonContainer}>
-              <TouchableOpacity style={styles.editButton} onPress={() => alert('Edit ' + item.key)}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => showPrompt(item.key, item.id)}
+              >
                 <Icon name="create-outline" size={25} color="black" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
         </TouchableOpacity>
+      );
+    } else if (item.type === 'create') {
+      return (
+        <View style={styles.createButtonContainer}>
+          <TouchableOpacity style={styles.createButton} onPress={() => showPrompt()}>
+            <Icon name="add-outline" size={40} color="black" />
+          </TouchableOpacity>
+        </View>
       );
     }
     return null;
@@ -137,27 +154,23 @@ export default function App() {
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <View style={styles.container}>
             <DraggableFlatList
-              data={data}
+              data={[...data, { type: 'create', id: 'create' }]}
               keyExtractor={(item) => item.id}
-              onDragEnd={({ data }) => setData(data)}
+              onDragEnd={({ data }) => setData(data.filter(d => d.type !== 'create'))}
               renderItem={renderItem}
               contentContainerStyle={styles.contentContainer}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
             />
 
-            <View style={styles.createButtonContainer}>
-              <TouchableOpacity style={styles.createButton} onPress={showCreatePrompt}>
-                <Icon name="add-outline" size={40} color="black" />
-              </TouchableOpacity>
-            </View>
-
             {creatingHabit && (
-              <TouchableWithoutFeedback onPress={hideCreatePrompt}>
+              <TouchableWithoutFeedback onPress={hidePrompt}>
                 <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
                   <TouchableWithoutFeedback onPress={() => {}}>
                     <View style={styles.promptContainer}>
                       <TextInput
                         style={styles.input}
-                        placeholder="New habit"
+                        placeholder="Habit name"
                         placeholderTextColor="#999"
                         value={newHabitText}
                         onChangeText={setNewHabitText}
@@ -167,17 +180,25 @@ export default function App() {
                         style={styles.checkmark}
                         onPress={() => {
                           if (newHabitText.trim()) {
-                            setData(prevData => [
-                              ...prevData,
-                              {
-                                type: 'habit',
-                                key: newHabitText,
-                                id: Date.now().toString(),
-                                completed: false,
-                              },
-                            ]);
+                            if (editingHabitId) {
+                              setData(prevData =>
+                                prevData.map(item =>
+                                  item.id === editingHabitId ? { ...item, key: newHabitText } : item
+                                )
+                              );
+                            } else {
+                              setData(prevData => [
+                                ...prevData,
+                                {
+                                  type: 'habit',
+                                  key: newHabitText,
+                                  id: Date.now().toString(),
+                                  completed: false,
+                                },
+                              ]);
+                            }
                           }
-                          hideCreatePrompt();
+                          hidePrompt();
                         }}
                       >
                         <Icon name="checkmark" size={30} color="black" />
@@ -194,62 +215,41 @@ export default function App() {
   );
 }
 
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'rgb(255, 255, 255)',
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  contentContainer: {},
+  contentContainer: {
+    paddingBottom: 80,
+  },
   text: {
     color: 'black',
-    fontSize: 45,
+    fontSize: 36,
     fontWeight: 'bold',
   },
   bedtimeText: {
-    paddingTop: 0,
     color: 'black',
-    fontSize: 25,
-  },
-  cardWrapper: {
-    width: Dimensions.get('window').width * 0.9,
-  },
-  cardContainer: {
-    height: 250,
-    borderRadius: 50,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  cardText: {
-    color: '#333',
-    fontSize: 50,
-    fontWeight: 'bold',
-    paddingTop: 0,
-    paddingLeft: 15,
+    fontSize: 20,
   },
   headerTextContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingLeft: 20,
-    width: '100%',
-    paddingRight: 20,
+    padding: 20,
   },
   textContainer: {
     flexDirection: 'column',
   },
   totalStreakBubble: {
     backgroundColor: 'grey',
-    borderRadius: 45,
-    width: 90,
-    height: 90,
+    borderRadius: 40,
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -258,49 +258,69 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
   },
+  cardWrapper: {
+    paddingVertical: 5,
+  },
+  cardContainer: {
+    width: Dimensions.get('window').width * 0.9,
+    height: 150,
+    borderRadius: 30,
+    padding: 20,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  cardText: {
+    color: '#333',
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
   habitTextContainer: {
-    paddingTop: 20,
+    paddingBottom: 10,
   },
   streakTextContainer: {
     position: 'absolute',
-    paddingTop: 160,
+    bottom: 20,
+    left: 20,
   },
   editButtonContainer: {
     position: 'absolute',
-    right: 15,
-    bottom: 30,
+    top: 20,
+    right: 20,
   },
   editButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 3,
   },
   createButtonContainer: {
     alignItems: 'center',
-    width: '100%',
-    paddingBottom: 30,
-    marginTop: -50,
+    marginTop: 10,
+    marginBottom: 0,
   },
   createButton: {
     width: 80,
     height: 80,
-    borderRadius: 50,
+    borderRadius: 40,
     backgroundColor: 'snow',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 3,
   },
   overlay: {
     position: 'absolute',
