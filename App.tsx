@@ -206,6 +206,51 @@ export default function App() {
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
             />
+            {creatingHabit && (
+              <TouchableWithoutFeedback onPress={hidePrompt}>
+                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
+                  <TouchableWithoutFeedback onPress={() => {}}>
+                    <View style={styles.promptContainer}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Habit name"
+                        placeholderTextColor="#999"
+                        value={newHabitText}
+                        onChangeText={setNewHabitText}
+                        autoFocus
+                      />
+                      <TouchableOpacity
+                        style={styles.checkmark}
+                        onPress={() => {
+                          if (newHabitText.trim()) {
+                            if (editingHabitId) {
+                              setData(prevData =>
+                                prevData.map(item =>
+                                  item.id === editingHabitId ? { ...item, key: newHabitText } : item
+                                )
+                              );
+                            } else {
+                              setData(prevData => [
+                                ...prevData,
+                                {
+                                  type: 'habit',
+                                  key: newHabitText,
+                                  id: Date.now().toString(),
+                                  completed: false,
+                                },
+                              ]);
+                            }
+                          }
+                          hidePrompt();
+                        }}
+                      >
+                        <Icon name="checkmark" size={30} color="black" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            )}
           </View>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -246,7 +291,7 @@ const styles = StyleSheet.create({
   editButtonContainer: { position: 'absolute', top: 20, right: 20 },
   editButtonPlain: { padding: 8 },
   dropdownMenuLight: {
-    position: 'absolute', top: 55, right: 10, backgroundColor: '#fff', borderRadius: 10,
+    position: 'absolute', top: 60, right: 0, backgroundColor: '#fff', borderRadius: 10,
     paddingVertical: 4, width: 120, elevation: 5,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3,
   },
@@ -264,5 +309,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  promptContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    width: '85%',
+  },
+  input: {
+    flex: 1,
+    fontSize: 20,
+    padding: 10,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  checkmark: {
+    padding: 10,
+    backgroundColor: 'lightgreen',
+    borderRadius: 50,
   },
 });
