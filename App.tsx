@@ -8,10 +8,8 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -25,6 +23,7 @@ export default function App() {
   const [creatingHabit, setCreatingHabit] = useState(false);
   const [newHabitText, setNewHabitText] = useState('');
   const [editingHabitId, setEditingHabitId] = useState(null);
+  const [menuVisibleId, setMenuVisibleId] = useState(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   const [data, setData] = useState([
@@ -91,6 +90,11 @@ export default function App() {
     );
   };
 
+  const deleteHabit = (id) => {
+    setData(prevData => prevData.filter(item => item.id !== id));
+    setMenuVisibleId(null);
+  };
+
   const renderItem = ({ item, drag, isActive }) => {
     if (item.type === 'header') {
       return (
@@ -127,12 +131,24 @@ export default function App() {
             </View>
             <View style={styles.editButtonContainer}>
               <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => showPrompt(item.key, item.id)}
+                style={[styles.editButton, { backgroundColor: '#222' }]}
+                onPress={() => setMenuVisibleId(menuVisibleId === item.id ? null : item.id)}
               >
-                <Icon name="ellipsis-horizontal-sharp" size={25} color="black" />
+                <Icon name="ellipsis-horizontal" size={25} color="white" />
               </TouchableOpacity>
             </View>
+            {menuVisibleId === item.id && (
+              <View style={styles.dropdownMenuOverlay}>
+                <View style={styles.dropdownMenuDark}>
+                  <TouchableOpacity onPress={() => { setMenuVisibleId(null); showPrompt(item.key, item.id); }}>
+                    <Text style={styles.menuItemDark}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteHabit(item.id)}>
+                    <Text style={styles.menuItemDark}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       );
@@ -165,7 +181,7 @@ export default function App() {
 
             {creatingHabit && (
               <TouchableWithoutFeedback onPress={hidePrompt}>
-                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
+                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
                   <TouchableWithoutFeedback onPress={() => {}}>
                     <View style={styles.promptContainer}>
                       <TextInput
@@ -215,52 +231,21 @@ export default function App() {
   );
 }
 
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingBottom: 80,
-  },
-  text: {
-    color: 'black',
-    fontSize: 36,
-    fontWeight: 'bold',
-  },
-  bedtimeText: {
-    color: 'black',
-    fontSize: 20,
-  },
+  safeArea: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
+  contentContainer: { paddingBottom: 80 },
+  text: { color: 'black', fontSize: 36, fontWeight: 'bold' },
+  bedtimeText: { color: 'black', fontSize: 20 },
   headerTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20,
   },
-  textContainer: {
-    flexDirection: 'column',
-  },
+  textContainer: { flexDirection: 'column' },
   totalStreakBubble: {
-    backgroundColor: 'grey',
-    borderRadius: 40,
-    width: 80,
-    height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'grey', borderRadius: 40, width: 80, height: 80, justifyContent: 'center', alignItems: 'center',
   },
-  totalStreakText: {
-    color: 'white',
-    fontSize: 30,
-    fontWeight: 'bold',
-  },
-  cardWrapper: {
-    paddingVertical: 5,
-  },
+  totalStreakText: { color: 'white', fontSize: 30, fontWeight: 'bold' },
+  cardWrapper: { paddingVertical: 5 },
   cardContainer: {
     width: Dimensions.get('window').width * 0.9,
     height: 150,
@@ -273,86 +258,49 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  cardText: {
-    color: '#333',
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  habitTextContainer: {
-    paddingBottom: 10,
-  },
-  streakTextContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-  },
-  editButtonContainer: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-  },
+  cardText: { color: '#333', fontSize: 28, fontWeight: 'bold' },
+  habitTextContainer: { paddingBottom: 10 },
+  streakTextContainer: { position: 'absolute', bottom: 20, left: 20 },
+  editButtonContainer: { position: 'absolute', top: 20, right: 20 },
   editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
+    width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
+  },
+  dropdownMenuOverlay: {
+    position: 'absolute', top: 60, right: 20, zIndex: 999,
+  },
+  dropdownMenuDark: {
+    backgroundColor: '#222', borderRadius: 10, padding: 10, width: 120,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3, shadowRadius: 4, elevation: 5,
+  },
+  menuItemDark: {
+    paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: 'white',
   },
   createButtonContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 0,
+    alignItems: 'center', marginTop: 10, marginBottom: 0,
   },
   createButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'snow',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
+    width: 80, height: 80, borderRadius: 40, backgroundColor: 'snow',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
   },
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    position: 'absolute', top: 0, left: 0,
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 10,
   },
   promptContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    width: '85%',
+    flexDirection: 'row', backgroundColor: 'white', padding: 20, borderRadius: 20,
+    alignItems: 'center', width: '85%',
   },
   input: {
-    flex: 1,
-    fontSize: 20,
-    padding: 10,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginRight: 10,
+    flex: 1, fontSize: 20, padding: 10, borderColor: '#ccc',
+    borderWidth: 1, borderRadius: 10, marginRight: 10,
   },
   checkmark: {
-    padding: 10,
-    backgroundColor: 'lightgreen',
-    borderRadius: 50,
+    padding: 10, backgroundColor: 'lightgreen', borderRadius: 50,
   },
 });
