@@ -24,6 +24,7 @@ export default function App() {
   const [newHabitText, setNewHabitText] = useState('');
   const [editingHabitId, setEditingHabitId] = useState(null);
   const [menuVisibleId, setMenuVisibleId] = useState(null);
+  const menuAnim = useState(new Animated.Value(0))[0];
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   const [data, setData] = useState([
@@ -131,23 +132,29 @@ export default function App() {
             </View>
             <View style={styles.editButtonContainer}>
               <TouchableOpacity
-                style={[styles.editButton, { backgroundColor: '#222' }]}
-                onPress={() => setMenuVisibleId(menuVisibleId === item.id ? null : item.id)}
+                style={styles.editButtonPlain}
+                onPress={() => {
+                  setMenuVisibleId(menuVisibleId === item.id ? null : item.id);
+                  Animated.timing(menuAnim, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                  }).start();
+                }}
               >
-                <Icon name="ellipsis-horizontal" size={25} color="white" />
+                <Icon name="ellipsis-horizontal" size={24} color="#666" />
               </TouchableOpacity>
             </View>
             {menuVisibleId === item.id && (
-              <View style={styles.dropdownMenuOverlay}>
-                <View style={styles.dropdownMenuDark}>
-                  <TouchableOpacity onPress={() => { setMenuVisibleId(null); showPrompt(item.key, item.id); }}>
-                    <Text style={styles.menuItemDark}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => deleteHabit(item.id)}>
-                    <Text style={styles.menuItemDark}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <Animated.View style={[styles.dropdownMenuLight, { opacity: menuAnim, transform: [{ scale: menuAnim }] }]}>
+                <TouchableOpacity onPress={() => { setMenuVisibleId(null); showPrompt(item.key, item.id); }}>
+                  <Text style={styles.menuItemLight}>Edit</Text>
+                </TouchableOpacity>
+                <View style={styles.menuDivider} />
+                <TouchableOpacity onPress={() => deleteHabit(item.id)}>
+                  <Text style={styles.menuItemLight}>Delete</Text>
+                </TouchableOpacity>
+              </Animated.View>
             )}
           </LinearGradient>
         </TouchableOpacity>
@@ -178,52 +185,6 @@ export default function App() {
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
             />
-
-            {creatingHabit && (
-              <TouchableWithoutFeedback onPress={hidePrompt}>
-                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-                  <TouchableWithoutFeedback onPress={() => {}}>
-                    <View style={styles.promptContainer}>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Habit name"
-                        placeholderTextColor="#999"
-                        value={newHabitText}
-                        onChangeText={setNewHabitText}
-                        autoFocus
-                      />
-                      <TouchableOpacity
-                        style={styles.checkmark}
-                        onPress={() => {
-                          if (newHabitText.trim()) {
-                            if (editingHabitId) {
-                              setData(prevData =>
-                                prevData.map(item =>
-                                  item.id === editingHabitId ? { ...item, key: newHabitText } : item
-                                )
-                              );
-                            } else {
-                              setData(prevData => [
-                                ...prevData,
-                                {
-                                  type: 'habit',
-                                  key: newHabitText,
-                                  id: Date.now().toString(),
-                                  completed: false,
-                                },
-                              ]);
-                            }
-                          }
-                          hidePrompt();
-                        }}
-                      >
-                        <Icon name="checkmark" size={30} color="black" />
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            )}
           </View>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -262,20 +223,17 @@ const styles = StyleSheet.create({
   habitTextContainer: { paddingBottom: 10 },
   streakTextContainer: { position: 'absolute', bottom: 20, left: 20 },
   editButtonContainer: { position: 'absolute', top: 20, right: 20 },
-  editButton: {
-    width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
+  editButtonPlain: { padding: 8 },
+  dropdownMenuLight: {
+    position: 'absolute', top: 60, right: 0, backgroundColor: '#fff', borderRadius: 10,
+    paddingVertical: 4, width: 120, elevation: 5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3,
   },
-  dropdownMenuOverlay: {
-    position: 'absolute', top: 60, right: 20, zIndex: 999,
+  menuItemLight: {
+    paddingVertical: 10, paddingHorizontal: 16, fontSize: 16, color: '#000',
   },
-  dropdownMenuDark: {
-    backgroundColor: '#222', borderRadius: 10, padding: 10, width: 120,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3, shadowRadius: 4, elevation: 5,
-  },
-  menuItemDark: {
-    paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: 'white',
+  menuDivider: {
+    height: 1, backgroundColor: '#eee', marginHorizontal: 12,
   },
   createButtonContainer: {
     alignItems: 'center', marginTop: 10, marginBottom: 0,
@@ -285,22 +243,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
-  },
-  overlay: {
-    position: 'absolute', top: 0, left: 0,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 10,
-  },
-  promptContainer: {
-    flexDirection: 'row', backgroundColor: 'white', padding: 20, borderRadius: 20,
-    alignItems: 'center', width: '85%',
-  },
-  input: {
-    flex: 1, fontSize: 20, padding: 10, borderColor: '#ccc',
-    borderWidth: 1, borderRadius: 10, marginRight: 10,
-  },
-  checkmark: {
-    padding: 10, backgroundColor: 'lightgreen', borderRadius: 50,
   },
 });
