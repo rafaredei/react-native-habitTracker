@@ -92,8 +92,14 @@ export default function App() {
   };
 
   const deleteHabit = (id) => {
-    setData(prevData => prevData.filter(item => item.id !== id));
-    setMenuVisibleId(null);
+    Animated.timing(menuAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setData(prevData => prevData.filter(item => item.id !== id));
+      setMenuVisibleId(null);
+    });
   };
 
   const renderItem = ({ item, drag, isActive }) => {
@@ -131,22 +137,37 @@ export default function App() {
               <Text style={[styles.cardText, { fontSize: 16 }]}>day streak</Text>
             </View>
             <View style={styles.editButtonContainer}>
-              <TouchableOpacity
-                style={styles.editButtonPlain}
+              <TouchableWithoutFeedback
                 onPress={() => {
-                  setMenuVisibleId(menuVisibleId === item.id ? null : item.id);
-                  Animated.timing(menuAnim, {
-                    toValue: 1,
-                    duration: 200,
-                    useNativeDriver: true,
-                  }).start();
+                  if (menuVisibleId === item.id) {
+                    Animated.timing(menuAnim, {
+                      toValue: 0,
+                      duration: 200,
+                      useNativeDriver: true,
+                    }).start(() => setMenuVisibleId(null));
+                  } else {
+                    setMenuVisibleId(item.id);
+                    Animated.timing(menuAnim, {
+                      toValue: 1,
+                      duration: 200,
+                      useNativeDriver: true,
+                    }).start();
+                  }
                 }}
               >
-                <Icon name="ellipsis-horizontal" size={24} color="#666" />
-              </TouchableOpacity>
+                <View style={styles.editButtonPlain}>
+                  <Icon name="ellipsis-horizontal" size={24} color="#333" />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
             {menuVisibleId === item.id && (
-              <Animated.View style={[styles.dropdownMenuLight, { opacity: menuAnim, transform: [{ scale: menuAnim }] }]}>
+              <Animated.View style={[
+                styles.dropdownMenuLight,
+                {
+                  opacity: menuAnim,
+                  transform: [{ scale: menuAnim }],
+                },
+              ]}>
                 <TouchableOpacity onPress={() => { setMenuVisibleId(null); showPrompt(item.key, item.id); }}>
                   <Text style={styles.menuItemLight}>Edit</Text>
                 </TouchableOpacity>
@@ -225,7 +246,7 @@ const styles = StyleSheet.create({
   editButtonContainer: { position: 'absolute', top: 20, right: 20 },
   editButtonPlain: { padding: 8 },
   dropdownMenuLight: {
-    position: 'absolute', top: 60, right: 0, backgroundColor: '#fff', borderRadius: 10,
+    position: 'absolute', top: 55, right: 10, backgroundColor: '#fff', borderRadius: 10,
     paddingVertical: 4, width: 120, elevation: 5,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3,
   },
