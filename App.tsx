@@ -8,12 +8,13 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  StatusBar,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function App() {
@@ -24,8 +25,8 @@ export default function App() {
   const [newHabitText, setNewHabitText] = useState('');
   const [editingHabitId, setEditingHabitId] = useState(null);
   const [menuVisibleId, setMenuVisibleId] = useState(null);
-  const menuAnim = useState(new Animated.Value(0))[0];
-  const fadeAnim = useState(new Animated.Value(0))[0];
+  const menuAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [data, setData] = useState([
     { type: 'header', key: 'your', id: '0', hours: 0, minutes: 0, seconds: 0 },
@@ -81,6 +82,23 @@ export default function App() {
     });
   };
 
+  const showMenu = (id) => {
+    setMenuVisibleId(id);
+    Animated.timing(menuAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideMenu = () => {
+    Animated.timing(menuAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setMenuVisibleId(null));
+  };
+
   const toggleCompletion = (id) => {
     setData(prevData =>
       prevData.map(item =>
@@ -92,14 +110,8 @@ export default function App() {
   };
 
   const deleteHabit = (id) => {
-    Animated.timing(menuAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setData(prevData => prevData.filter(item => item.id !== id));
-      setMenuVisibleId(null);
-    });
+    hideMenu();
+    setData(prevData => prevData.filter(item => item.id !== id));
   };
 
   const renderItem = ({ item, drag, isActive }) => {
@@ -118,67 +130,63 @@ export default function App() {
       );
     } else if (item.type === 'habit') {
       return (
-        <TouchableOpacity
-          onPress={() => toggleCompletion(item.id)}
-          onLongPress={drag}
-          delayLongPress={150}
-          style={[styles.cardWrapper, { alignSelf: 'center' }, isActive && { opacity: 0.7 }]}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']}
-            style={styles.cardContainer}
-          >
-            <View style={styles.habitTextContainer}>
-              <Text style={styles.cardText}>{item.key}</Text>
-            </View>
-            <View style={styles.streakTextContainer}>
-              <Text style={[styles.cardText, { fontSize: 25 }]}>23</Text>
-              <Text style={[styles.cardText, { fontSize: 16 }]}>day streak</Text>
-            </View>
-            <View style={styles.editButtonContainer}>
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  if (menuVisibleId === item.id) {
-                    Animated.timing(menuAnim, {
-                      toValue: 0,
-                      duration: 200,
-                      useNativeDriver: true,
-                    }).start(() => setMenuVisibleId(null));
-                  } else {
-                    setMenuVisibleId(item.id);
-                    Animated.timing(menuAnim, {
-                      toValue: 1,
-                      duration: 200,
-                      useNativeDriver: true,
-                    }).start();
-                  }
-                }}
+        <TouchableWithoutFeedback onPress={() => hideMenu()}>
+          <View>
+            <TouchableOpacity
+              onPress={() => toggleCompletion(item.id)}
+              onLongPress={drag}
+              delayLongPress={150}
+              style={[styles.cardWrapper, { alignSelf: 'center' }, isActive && { opacity: 0.7 }]}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={item.completed ? ['#98FB98', '#90EE90'] : ['#DDA0DD', '#E6E6FA']}
+                style={styles.cardContainer}
               >
-                <View style={styles.editButtonPlain}>
-                  <Icon name="ellipsis-horizontal" size={24} color="#333" />
+                <View style={styles.habitTextContainer}>
+                  <Text style={styles.cardText}>{item.key}</Text>
                 </View>
-              </TouchableWithoutFeedback>
-            </View>
-            {menuVisibleId === item.id && (
-              <Animated.View style={[
-                styles.dropdownMenuLight,
-                {
-                  opacity: menuAnim,
-                  transform: [{ scale: menuAnim }],
-                },
-              ]}>
-                <TouchableOpacity onPress={() => { setMenuVisibleId(null); showPrompt(item.key, item.id); }}>
-                  <Text style={styles.menuItemLight}>Edit</Text>
-                </TouchableOpacity>
-                <View style={styles.menuDivider} />
-                <TouchableOpacity onPress={() => deleteHabit(item.id)}>
-                  <Text style={styles.menuItemLight}>Delete</Text>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+                <View style={styles.streakTextContainer}>
+                  <Text style={[styles.cardText, { fontSize: 25 }]}>23</Text>
+                  <Text style={[styles.cardText, { fontSize: 16 }]}>day streak</Text>
+                </View>
+                <View style={styles.editButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.editButtonPlain}
+                    activeOpacity={1}
+                    onPress={() => {
+                      if (menuVisibleId === item.id) {
+                        hideMenu();
+                      } else {
+                        showMenu(item.id);
+                      }
+                    }}
+                  >
+                    <Icon name="ellipsis-horizontal" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                {menuVisibleId === item.id && (
+                  <TouchableWithoutFeedback onPress={() => hideMenu()}>
+                    <Animated.View
+                      style={[styles.dropdownMenuLight, {
+                        opacity: menuAnim,
+                        transform: [{ scale: menuAnim }],
+                      }]}
+                    >
+                      <TouchableOpacity onPress={() => { hideMenu(); showPrompt(item.key, item.id); }}>
+                        <Text style={styles.menuItemLight}>Edit</Text>
+                      </TouchableOpacity>
+                      <View style={styles.menuDivider} />
+                      <TouchableOpacity onPress={() => deleteHabit(item.id)}>
+                        <Text style={styles.menuItemLight}>Delete</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+                  </TouchableWithoutFeedback>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
       );
     } else if (item.type === 'create') {
       return (
@@ -195,63 +203,84 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SafeAreaView edges={['top']} style={styles.safeArea}>
-          <View style={styles.container}>
-            <DraggableFlatList
-              data={[...data, { type: 'create', id: 'create' }]}
-              keyExtractor={(item) => item.id}
-              onDragEnd={({ data }) => setData(data.filter(d => d.type !== 'create'))}
-              renderItem={renderItem}
-              contentContainerStyle={styles.contentContainer}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-            />
-            {creatingHabit && (
-              <TouchableWithoutFeedback onPress={hidePrompt}>
-                <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
-                  <TouchableWithoutFeedback onPress={() => {}}>
-                    <View style={styles.promptContainer}>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Habit name"
-                        placeholderTextColor="#999"
-                        value={newHabitText}
-                        onChangeText={setNewHabitText}
-                        autoFocus
-                      />
-                      <TouchableOpacity
-                        style={styles.checkmark}
-                        onPress={() => {
-                          if (newHabitText.trim()) {
-                            if (editingHabitId) {
-                              setData(prevData =>
-                                prevData.map(item =>
-                                  item.id === editingHabitId ? { ...item, key: newHabitText } : item
-                                )
-                              );
-                            } else {
-                              setData(prevData => [
-                                ...prevData,
-                                {
-                                  type: 'habit',
-                                  key: newHabitText,
-                                  id: Date.now().toString(),
-                                  completed: false,
-                                },
-                              ]);
-                            }
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+          {/* Conditional overlay for dismissal */}
+          {(creatingHabit || menuVisibleId !== null) && (
+            <TouchableWithoutFeedback
+              onPress={() => {
+                if (creatingHabit) hidePrompt();
+                if (menuVisibleId !== null) hideMenu();
+                Keyboard.dismiss();
+              }}
+            >
+              <View style={[StyleSheet.absoluteFill, { zIndex: 999 }]} />
+            </TouchableWithoutFeedback>
+          )}
+          <Animated.View
+            pointerEvents={creatingHabit ? 'box-none' : 'none'} // Allow prompt interaction
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: 'rgba(0,0,0,0.15)',
+                opacity: fadeAnim,
+                zIndex: creatingHabit ? 1000 : -1,
+              },
+            ]}
+          />
+          <DraggableFlatList
+            data={[...data, { type: 'create', id: 'create' }]}
+            keyExtractor={(item) => item.id}
+            onDragEnd={({ data }) => setData(data.filter(d => d.type !== 'create'))}
+            renderItem={renderItem}
+            contentContainerStyle={styles.contentContainer}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+          />
+          {creatingHabit && (
+            <TouchableWithoutFeedback onPress={hidePrompt}>
+              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', zIndex: 1001 }]}>
+                <TouchableWithoutFeedback onPress={() => {}}>
+                  <View style={styles.promptContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Habit name"
+                      placeholderTextColor="#999"
+                      value={newHabitText}
+                      onChangeText={setNewHabitText}
+                      autoFocus
+                    />
+                    <TouchableOpacity
+                      style={styles.checkmark}
+                      onPress={() => {
+                        if (newHabitText.trim()) {
+                          if (editingHabitId) {
+                            setData(prevData =>
+                              prevData.map(item =>
+                                item.id === editingHabitId ? { ...item, key: newHabitText } : item
+                              )
+                            );
+                          } else {
+                            setData(prevData => [
+                              ...prevData,
+                              {
+                                type: 'habit',
+                                key: newHabitText,
+                                id: Date.now().toString(),
+                                completed: false,
+                              },
+                            ]);
                           }
                           hidePrompt();
-                        }}
-                      >
-                        <Icon name="checkmark" size={30} color="black" />
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            )}
-          </View>
+                        }
+                      }}
+                    >
+                      <Icon name="checkmark" size={30} color="black" />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          )}
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -309,17 +338,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 2, elevation: 3,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
   },
   promptContainer: {
     flexDirection: 'row',
